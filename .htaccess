@@ -1,0 +1,4 @@
+# Chuyển mọi request vào thư mục public/ (để truy cập http://localhost/Thuong_mai_dien_tu/)
+RewriteEngine On
+RewriteRule ^$ public/ [L]
+RewriteRule (.*) public/$1 [L]

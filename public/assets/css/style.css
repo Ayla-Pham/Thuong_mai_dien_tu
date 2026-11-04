@@ -1,0 +1,5 @@
+.ratio-3x4 { --bs-aspect-ratio: 133%; }
+.product-card { position: relative; transition: transform .15s, box-shadow .15s; }
+.product-card:hover { transform: translateY(-4px); box-shadow: 0 .5rem 1rem rgba(0,0,0,.15); }
+.product-name { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.9em; }
+.object-fit-cover { object-fit: cover; }
