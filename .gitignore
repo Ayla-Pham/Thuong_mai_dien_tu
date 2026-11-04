@@ -1,0 +1,8 @@
+# Ảnh sản phẩm do admin upload (không đưa lên git)
+public/assets/products/*
+!public/assets/products/.gitkeep
+
+# File tạm / cấu hình riêng
+*.log
+.env
+config/config.local.php

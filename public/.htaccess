@@ -1,0 +1,5 @@
+# URL thân thiện: mọi đường dẫn không phải file/thư mục thật sẽ đi qua index.php (Front Controller)
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [L,QSA]
