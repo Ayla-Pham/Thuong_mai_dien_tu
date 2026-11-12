@@ -35,6 +35,34 @@
                 <input name="code" class="form-control" placeholder="Mã giảm giá" value="<?= e($totals['coupon']['code'] ?? '') ?>">
                 <button class="btn btn-outline-secondary"><?= $totals['coupon'] ? 'Gỡ / đổi' : 'Áp dụng' ?></button>
             </form>
+            <?php if ($vouchers): ?>
+            <div class="mb-3">
+                <div class="small fw-semibold mb-2">🎟️ Voucher dành cho bạn</div>
+                <?php foreach ($vouchers as $v): $applied = ($totals['coupon']['code'] ?? '') === $v['code']; ?>
+                    <div class="border rounded p-2 mb-2 <?= $v['usable'] ? '' : 'bg-light text-muted' ?> <?= $applied ? 'border-success' : '' ?>">
+                        <div class="d-flex justify-content-between align-items-start gap-2">
+                            <div>
+                                <span class="badge bg-warning text-dark"><?= e($v['code']) ?></span>
+                                <?php if ($v['best'] && !$applied): ?><span class="badge bg-success">Tốt nhất</span><?php endif; ?>
+                                <?php if ($applied): ?><span class="badge bg-success">Đang dùng</span><?php endif; ?>
+                                <div class="small fw-semibold mt-1"><?= e(Coupon::describe($v)) ?></div>
+                                <div class="small">Đơn tối thiểu <?= money($v['min_order']) ?><?= $v['end_date'] ? ' · HSD ' . date('d/m/Y', strtotime($v['end_date'])) : '' ?></div>
+                                <?php if ($v['usable']): ?>
+                                    <div class="small text-success">Tiết kiệm <?= money($v['discount']) ?> cho giỏ hàng này</div>
+                                <?php else: ?>
+                                    <div class="small text-danger">Mua thêm <?= money($v['missing']) ?> để dùng mã này</div>
+                                <?php endif; ?>
+                            </div>
+                            <form method="post" action="<?= url('/gio-hang/ma-giam-gia') ?>">
+                                <?= csrf_field() ?>
+                                <input type="hidden" name="code" value="<?= $applied ? '' : e($v['code']) ?>">
+                                <button class="btn btn-sm <?= $applied ? 'btn-outline-secondary' : 'btn-primary' ?>" <?= (!$applied && !$v['usable']) ? 'disabled' : '' ?>><?= $applied ? 'Bỏ chọn' : 'Chọn' ?></button>
+                            </form>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
             <dl class="row mb-0">
                 <dt class="col-6 fw-normal">Tạm tính</dt><dd class="col-6 text-end"><?= money($totals['subtotal']) ?></dd>
                 <dt class="col-6 fw-normal">Giảm giá</dt><dd class="col-6 text-end text-success">-<?= money($totals['discount']) ?></dd>

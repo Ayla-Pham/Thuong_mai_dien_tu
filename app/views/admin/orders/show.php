@@ -24,6 +24,7 @@
             <strong class="mt-2">Thanh toán</strong><?= e(payment_label($o['payment_method'])) ?> – <?= $o['payment_status'] === 'paid' ? 'Đã thu tiền' : 'Chưa thu tiền' ?>
         </div>
 
+
         <?php if (Order::FLOW[$o['status']]): ?>
         <form method="post" action="<?= url('/admin/don-hang/' . $o['id'] . '/trang-thai') ?>" class="card card-body mb-3">
             <?= csrf_field() ?>

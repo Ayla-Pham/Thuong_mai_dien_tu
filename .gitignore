@@ -6,3 +6,7 @@ public/assets/products/*
 *.log
 .env
 config/config.local.php
+
+# File hóa đơn nhập hàng do admin upload (dữ liệu riêng tư, không đưa lên git)
+storage/invoices/*
+!storage/invoices/.gitkeep

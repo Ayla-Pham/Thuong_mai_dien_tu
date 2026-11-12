@@ -174,3 +174,95 @@ CREATE TABLE reviews (
     CONSTRAINT fk_rv_user FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE CASCADE,
     UNIQUE KEY uq_review (product_id, user_id)
 ) ENGINE=InnoDB;
+
+-- ---------------------------------------------------------------------
+-- 9. NHẬP HÀNG (suppliers, purchase_invoices, purchase_invoice_items)
+-- ---------------------------------------------------------------------
+CREATE TABLE suppliers (
+    id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name       VARCHAR(150) NOT NULL,
+    phone      VARCHAR(20)  NULL,
+    email      VARCHAR(150) NULL,
+    address    VARCHAR(255) NULL,
+    tax_code   VARCHAR(20)  NULL,                       -- mã số thuế
+    is_active  TINYINT(1)   NOT NULL DEFAULT 1,
+    created_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+CREATE TABLE purchase_invoices (
+    id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    supplier_id   INT UNSIGNED NOT NULL,
+    created_by    INT UNSIGNED NOT NULL,                -- admin lập phiếu
+    invoice_no    VARCHAR(50)  NOT NULL,                -- số hóa đơn in trên giấy của NCC
+    invoice_date  DATE         NOT NULL,
+    total         DECIMAL(14,0) NOT NULL DEFAULT 0,     -- = tổng (số lượng x giá nhập), server tự tính
+    note          VARCHAR(255) NULL,
+    status        ENUM('received','cancelled') NOT NULL DEFAULT 'received',
+    file_path     VARCHAR(100) NULL,                    -- tên file lưu trên đĩa (đã đổi tên ngẫu nhiên)
+    file_name     VARCHAR(150) NULL,                    -- tên gốc để hiển thị khi tải về
+    created_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_pi_supplier FOREIGN KEY (supplier_id) REFERENCES suppliers(id),
+    CONSTRAINT fk_pi_user     FOREIGN KEY (created_by)  REFERENCES users(id),
+    UNIQUE KEY uq_supplier_invoice (supplier_id, invoice_no),   -- 1 NCC không có 2 hóa đơn trùng số
+    INDEX idx_pi_date (invoice_date)
+) ENGINE=InnoDB;
+
+CREATE TABLE purchase_invoice_items (
+    id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    invoice_id  INT UNSIGNED NOT NULL,
+    product_id  INT UNSIGNED NOT NULL,
+    quantity    INT UNSIGNED NOT NULL,
+    unit_cost   DECIMAL(12,0) NOT NULL,                 -- giá nhập / đơn vị
+    CONSTRAINT fk_pii_invoice FOREIGN KEY (invoice_id) REFERENCES purchase_invoices(id) ON DELETE CASCADE,
+    CONSTRAINT fk_pii_product FOREIGN KEY (product_id) REFERENCES products(id)
+) ENGINE=InnoDB;
+
+
+-- ---------------------------------------------------------------------
+-- 10. GIỎ HÀNG LƯU THEO TÀI KHOẢN (cart_items)
+-- ---------------------------------------------------------------------
+CREATE TABLE cart_items (
+    user_id     INT UNSIGNED NOT NULL,
+    product_id  INT UNSIGNED NOT NULL,
+    quantity    INT UNSIGNED NOT NULL,
+    updated_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, product_id),                  -- mỗi người chỉ có 1 dòng cho mỗi sản phẩm
+    CONSTRAINT fk_ci_user FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE CASCADE,
+    CONSTRAINT fk_ci_prod FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- ---------------------------------------------------------------------
+-- 11. CHAT (chat_conversations, chat_messages) + CÀI ĐẶT (settings)
+-- ---------------------------------------------------------------------
+-- Mỗi khách có đúng 1 cuộc trò chuyện với shop
+CREATE TABLE chat_conversations (
+    id                 INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id            INT UNSIGNED NOT NULL UNIQUE,
+    customer_unread    INT UNSIGNED NOT NULL DEFAULT 0,   -- số tin shop gửi mà khách chưa đọc
+    admin_unread       INT UNSIGNED NOT NULL DEFAULT 0,   -- số tin khách gửi mà admin chưa đọc
+    last_auto_reply_at DATETIME NULL,                     -- lần gần nhất gửi tin tự động (tránh gửi lặp)
+    last_message_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at         TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_cc_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_cc_last (last_message_at)
+) ENGINE=InnoDB;
+
+CREATE TABLE chat_messages (
+    id               INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    conversation_id  INT UNSIGNED NOT NULL,
+    sender           ENUM('customer','admin','auto') NOT NULL,   -- auto = tin nhắn tự động do admin soạn sẵn
+    body             VARCHAR(1000) NOT NULL,
+    created_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_cm_conv FOREIGN KEY (conversation_id) REFERENCES chat_conversations(id) ON DELETE CASCADE,
+    INDEX idx_cm_conv (conversation_id, id)
+) ENGINE=InnoDB;
+
+-- Bảng cài đặt chung dạng khóa - giá trị (dùng cho nội dung tin nhắn tự động)
+CREATE TABLE settings (
+    name   VARCHAR(50) PRIMARY KEY,
+    value  TEXT NOT NULL
+) ENGINE=InnoDB;
+
+INSERT IGNORE INTO settings (name, value) VALUES
+('chat_auto_reply_enabled', '1'),
+('chat_auto_reply_text', 'Xin chào! Cảm ơn bạn đã nhắn tin cho BookStore 📚. Chúng tôi đã nhận được tin nhắn và sẽ phản hồi trong thời gian sớm nhất (giờ làm việc 8:00 - 21:00 hằng ngày).');

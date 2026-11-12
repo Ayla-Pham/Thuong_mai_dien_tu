@@ -1,0 +1,21 @@
+/* Giao diện chat dùng chung (khách + admin) */
+.chat-list { overflow-y: auto; padding: .75rem; background: #f4f6fa; display: flex; flex-direction: column; gap: .5rem; }
+.chat-msg { max-width: 80%; display: flex; flex-direction: column; }
+.chat-msg.mine { align-self: flex-end; align-items: flex-end; }
+.chat-msg.theirs { align-self: flex-start; align-items: flex-start; }
+.chat-body { padding: .45rem .75rem; border-radius: 1rem; white-space: pre-wrap; word-break: break-word; font-size: .92rem; }
+.chat-msg.mine .chat-body { background: #0d6efd; color: #fff; border-bottom-right-radius: .25rem; }
+.chat-msg.theirs .chat-body { background: #fff; color: #212529; border: 1px solid #dee2e6; border-bottom-left-radius: .25rem; }
+.chat-msg.auto .chat-body { background: #fff8e1; border-color: #ffe08a; color: #5c4600; }
+.chat-msg.auto.mine .chat-body { background: #fff8e1; color: #5c4600; border: 1px solid #ffe08a; }
+.chat-tag { font-size: .68rem; color: #8a6d00; margin-bottom: 2px; }
+.chat-time { font-size: .68rem; color: #8a8f98; margin-top: 2px; }
+
+/* Khung chat nổi góc phải dưới (phía khách) */
+#chat-fab { position: fixed; right: 18px; bottom: 18px; z-index: 1040; width: 56px; height: 56px; border-radius: 50%; border: 0;
+            background: #0d6efd; color: #fff; font-size: 1.6rem; box-shadow: 0 4px 14px rgba(0,0,0,.3); }
+#chat-fab .badge { position: absolute; top: -4px; right: -4px; }
+#chat-panel { position: fixed; right: 18px; bottom: 86px; z-index: 1040; width: 340px; max-width: calc(100vw - 36px); height: 460px; max-height: calc(100vh - 110px);
+              background: #fff; border-radius: .75rem; box-shadow: 0 8px 28px rgba(0,0,0,.3); display: none; flex-direction: column; overflow: hidden; }
+#chat-panel.open { display: flex; }
+#chat-panel .chat-list { flex: 1; }

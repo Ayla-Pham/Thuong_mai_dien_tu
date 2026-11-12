@@ -6,6 +6,8 @@
 $router->get('/', 'HomeController@index');
 $router->get('/san-pham', 'ShopController@index');
 $router->get('/san-pham/{slug}', 'ShopController@show');
+$router->post('/san-pham/{slug}/danh-gia', 'ShopController@review');
+$router->post('/san-pham/{slug}/danh-gia/xoa', 'ShopController@deleteReview');
 
 // --- Giỏ hàng, thanh toán, đơn hàng ---
 $router->get('/gio-hang', 'CartController@index');
@@ -58,3 +60,30 @@ $router->post('/dang-xuat', 'AuthController@logout');
 $router->get('/tai-khoan', 'AccountController@profile');
 $router->post('/tai-khoan', 'AccountController@updateProfile');
 $router->post('/tai-khoan/doi-mat-khau', 'AccountController@changePassword');
+
+// --- Nhập hàng: nhà cung cấp & hóa đơn nhập (route tĩnh /them đặt trước route có {id}) ---
+$router->get('/admin/nha-cung-cap', 'AdminSupplierController@index');
+$router->get('/admin/nha-cung-cap/them', 'AdminSupplierController@create');
+$router->post('/admin/nha-cung-cap', 'AdminSupplierController@store');
+$router->get('/admin/nha-cung-cap/{id}/sua', 'AdminSupplierController@edit');
+$router->post('/admin/nha-cung-cap/{id}', 'AdminSupplierController@update');
+$router->post('/admin/nha-cung-cap/{id}/xoa', 'AdminSupplierController@delete');
+$router->get('/admin/hoa-don-nhap', 'AdminPurchaseController@index');
+$router->get('/admin/hoa-don-nhap/them', 'AdminPurchaseController@create');
+$router->post('/admin/hoa-don-nhap', 'AdminPurchaseController@store');
+$router->get('/admin/hoa-don-nhap/mau', 'AdminPurchaseController@template');
+$router->post('/admin/hoa-don-nhap/doc-file', 'AdminPurchaseController@parseFile');
+$router->get('/admin/hoa-don-nhap/{id}', 'AdminPurchaseController@show');
+$router->get('/admin/hoa-don-nhap/{id}/tai-ve', 'AdminPurchaseController@download');
+$router->post('/admin/hoa-don-nhap/{id}/tep', 'AdminPurchaseController@uploadFile');
+$router->post('/admin/hoa-don-nhap/{id}/huy', 'AdminPurchaseController@cancel');
+
+// --- Chat khách hàng <-> shop ---
+$router->get('/chat/tin-nhan', 'ChatController@messages');
+$router->post('/chat/gui', 'ChatController@send');
+$router->get('/admin/tin-nhan', 'AdminChatController@index');
+$router->get('/admin/tin-nhan/tu-dong', 'AdminChatController@autoReply');
+$router->post('/admin/tin-nhan/tu-dong', 'AdminChatController@saveAutoReply');
+$router->get('/admin/tin-nhan/{id}', 'AdminChatController@show');
+$router->get('/admin/tin-nhan/{id}/lay', 'AdminChatController@messages');
+$router->post('/admin/tin-nhan/{id}/gui', 'AdminChatController@send');

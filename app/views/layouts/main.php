@@ -46,5 +46,6 @@
     <div class="container small">&copy; <?= date('Y') ?> BookStore - Sách &amp; Văn phòng phẩm. Đồ án môn Thương mại điện tử.</div>
 </footer>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<?php require APP_PATH . "/views/partials/chat_widget.php"; ?>
 </body>
 </html>

@@ -6,9 +6,12 @@ class CartController extends Controller
     {
         $cart  = new Cart();
         $items = $cart->items();
+        $totals = $cart->totals($items);
         $this->render('cart/index', [
             'title' => 'Giỏ hàng', 'description' => 'Giỏ hàng của bạn tại BookStore.',
-            'items' => $items, 'totals' => $cart->totals($items),
+            'items' => $items, 'totals' => $totals,
+            // Danh sách voucher để khách chọn, tính theo tạm tính hiện tại
+            'vouchers' => $items ? (new Coupon())->available((int)$totals['subtotal']) : [],
         ]);
     }
 

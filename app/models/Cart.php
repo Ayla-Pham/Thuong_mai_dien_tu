@@ -26,18 +26,54 @@ class Cart extends Model
 
         $new = ($_SESSION['cart'][$productId] ?? 0) + max(1, $qty);
         $_SESSION['cart'][$productId] = min($new, (int)$stock);
+        $this->persist();
         return $new > $stock ? "Chỉ còn $stock sản phẩm trong kho, đã điều chỉnh số lượng." : null;
     }
 
     public function setQty(int $productId, int $qty): void
     {
-        if ($qty < 1) { unset($_SESSION['cart'][$productId]); return; }
+        if ($qty < 1) { unset($_SESSION['cart'][$productId]); $this->persist(); return; }
         if (isset($_SESSION['cart'][$productId])) $_SESSION['cart'][$productId] = $qty;   // items() sẽ cắt theo tồn kho
+        $this->persist();
     }
 
-    public function remove(int $productId): void { unset($_SESSION['cart'][$productId]); }
+    public function remove(int $productId): void { unset($_SESSION['cart'][$productId]); $this->persist(); }
 
-    public function clear(): void { unset($_SESSION['cart'], $_SESSION['coupon']); }
+    public function clear(): void { unset($_SESSION['cart'], $_SESSION['coupon']); $this->persist(); }
+
+    /* ===================== GIỎ HÀNG LƯU THEO TÀI KHOẢN =====================
+     * SESSION vẫn là nơi giỏ được đọc/ghi hằng ngày (nhanh). Khi khách đã đăng nhập, mỗi thay đổi
+     * được sao chép xuống bảng cart_items; đăng xuất chỉ xóa session nên dữ liệu trong DB vẫn còn,
+     * lần đăng nhập sau (kể cả ở thiết bị khác) giỏ được khôi phục từ DB. */
+
+    /** Ghi giỏ hiện tại trong session xuống DB (thay thế toàn bộ dòng cũ của user). Khách vãng lai thì bỏ qua. */
+    private function persist(): void
+    {
+        $user = auth_user();
+        if (!$user) return;
+        $this->db->beginTransaction();
+        $this->db->prepare("DELETE FROM cart_items WHERE user_id = ?")->execute([$user['id']]);
+        $ins = $this->db->prepare("INSERT INTO cart_items (user_id, product_id, quantity) VALUES (?,?,?)");
+        foreach ($_SESSION['cart'] ?? [] as $pid => $qty) {
+            if ($qty > 0) $ins->execute([$user['id'], (int)$pid, (int)$qty]);
+        }
+        $this->db->commit();
+    }
+
+    /**
+     * Gọi ngay sau khi đăng nhập/đăng ký: gộp giỏ đã lưu trong DB với giỏ khách vừa thêm lúc chưa đăng nhập
+     * (cùng sản phẩm thì cộng dồn số lượng), rồi cắt theo tồn kho và lưu lại.
+     */
+    public function restoreForUser(int $userId): void
+    {
+        $st = $this->db->prepare("SELECT product_id, quantity FROM cart_items WHERE user_id = ?");
+        $st->execute([$userId]);
+        foreach ($st->fetchAll() as $row) {
+            $_SESSION['cart'][$row['product_id']] = ($_SESSION['cart'][$row['product_id']] ?? 0) + (int)$row['quantity'];
+        }
+        $this->items();     // loại sản phẩm hết hàng/ngừng bán, cắt số lượng theo tồn kho
+        $this->persist();
+    }
 
     /** Danh sách dòng giỏ hàng (đọc giá + tồn kho mới nhất từ DB). */
     public function items(): array
@@ -60,6 +96,7 @@ class Cart extends Model
         // Dọn các id không còn hợp lệ
         $valid = array_column(array_column($items, 'p'), 'id');
         foreach (array_keys($cart) as $id) if (!in_array($id, $valid)) unset($_SESSION['cart'][$id]);
+        if (($_SESSION['cart'] ?? []) != $cart) $this->persist();   // giỏ bị điều chỉnh (hết hàng/vượt tồn) -> đồng bộ DB
         return $items;
     }
 
