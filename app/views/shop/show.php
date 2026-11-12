@@ -1,4 +1,5 @@
-<?php $hasSale = $p['sale_price'] !== null && $p['sale_price'] < $p['price']; ?>
+<?php $hasSale = $p['sale_price'] !== null && $p['sale_price'] < $p['price'];
+$pageSlug = $p['slug'];   // lưu lại vì biến $p bị các vòng lặp "sản phẩm liên quan" bên dưới ghi đè ?>
 <nav aria-label="breadcrumb"><ol class="breadcrumb small">
     <li class="breadcrumb-item"><a href="<?= url('/') ?>">Trang chủ</a></li>
     <li class="breadcrumb-item"><a href="<?= url('/san-pham?category=' . $info['category']['slug']) ?>"><?= e($info['category']['name']) ?></a></li>
@@ -55,8 +56,41 @@
 </div>
 <?php endif; ?>
 
-<?php if ($info['reviews']): ?>
-<h2 class="h5 mt-5 mb-3">Đánh giá</h2>
+<h2 class="h5 mt-5 mb-3" id="danh-gia">Đánh giá sản phẩm</h2>
+
+<?php if ($canReview): /* khách đã mua + nhận hàng: hiện form gửi/sửa đánh giá */ ?>
+<form method="post" action="<?= url('/san-pham/' . $pageSlug . '/danh-gia') ?>" class="card card-body mb-4" style="max-width:600px">
+    <?= csrf_field() ?>
+    <div class="fw-semibold mb-2"><?= $myReview ? 'Đánh giá của bạn (có thể chỉnh sửa)' : 'Bạn đã mua sản phẩm này, hãy chia sẻ cảm nhận' ?></div>
+    <div class="star-input mb-2" role="radiogroup" aria-label="Số sao">
+        <?php for ($i = 5; $i >= 1; $i--): ?>
+            <input type="radio" name="rating" id="star<?= $i ?>" value="<?= $i ?>" <?= (int)($myReview['rating'] ?? 0) === $i ? 'checked' : '' ?> required>
+            <label for="star<?= $i ?>" title="<?= $i ?> sao">★</label>
+        <?php endfor; ?>
+    </div>
+    <textarea name="comment" class="form-control mb-2" rows="3" maxlength="500" placeholder="Nhận xét của bạn (không bắt buộc)"><?= e($myReview['comment'] ?? '') ?></textarea>
+    <div><button class="btn btn-primary btn-sm"><?= $myReview ? 'Cập nhật đánh giá' : 'Gửi đánh giá' ?></button>
+    <?php if ($myReview): ?><button class="btn btn-outline-danger btn-sm" formaction="<?= url('/san-pham/' . $pageSlug . '/danh-gia/xoa') ?>" onclick="return confirm('Xóa đánh giá của bạn?')">Xóa</button><?php endif; ?></div>
+</form>
+<?php elseif (!auth_user()): ?>
+    <p class="small text-muted"><a href="<?= url('/dang-nhap') ?>">Đăng nhập</a> để đánh giá sản phẩm bạn đã mua.</p>
+<?php else: ?>
+    <p class="small text-muted">Chỉ khách đã mua và nhận sản phẩm này mới có thể đánh giá.</p>
+<?php endif; ?>
+
 <?php foreach ($info['reviews'] as $r): ?>
-    <div class="border-bottom py-2"><strong><?= e($r['full_name']) ?></strong> <span class="text-warning"><?= str_repeat('★', (int)$r['rating']) ?></span><br><?= e($r['comment']) ?></div>
-<?php endforeach; endif; ?>
+    <div class="border-bottom py-2">
+        <strong><?= e($r['full_name']) ?></strong> <span class="text-warning"><?= str_repeat('★', (int)$r['rating']) ?><span class="text-black-50"><?= str_repeat('★', 5 - (int)$r['rating']) ?></span></span>
+        <small class="text-muted ms-2"><?= date('d/m/Y', strtotime($r['created_at'])) ?></small>
+        <?php if ($r['comment']): ?><br><?= nl2br(e($r['comment'])) ?><?php endif; ?>
+    </div>
+<?php endforeach; ?>
+<?php if (!$info['reviews']): ?><p class="text-muted small">Chưa có đánh giá nào.</p><?php endif; ?>
+<style>
+/* Chọn sao: các input ẩn, label ★ tô màu khi hover/được chọn. Đảo thứ tự (5→1) + row-reverse để tô các sao bên trái. */
+.star-input { display:inline-flex; flex-direction:row-reverse; justify-content:flex-end; }
+.star-input input { position:absolute; opacity:0; }
+.star-input label { font-size:1.8rem; color:#ccc; cursor:pointer; padding:0 2px; }
+.star-input input:checked ~ label, .star-input label:hover, .star-input label:hover ~ label { color:#ffc107; }
+.star-input input:focus-visible + label { outline:2px solid #0d6efd; }
+</style>

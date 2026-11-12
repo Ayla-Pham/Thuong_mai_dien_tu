@@ -11,7 +11,11 @@
 <body class="bg-light">
 <?php
 $nav = ['/admin' => '📊 Tổng quan', '/admin/san-pham' => '📚 Sản phẩm', '/admin/danh-muc' => '🗂 Danh mục',
-        '/admin/don-hang' => '🧾 Đơn hàng', '/admin/khach-hang' => '👥 Khách hàng', '/admin/ma-giam-gia' => '🏷 Mã giảm giá'];
+        '/admin/don-hang' => '🧾 Đơn hàng', '/admin/khach-hang' => '👥 Khách hàng', '/admin/ma-giam-gia' => '🏷 Mã giảm giá',
+        '/admin/nha-cung-cap' => '🚚 Nhà cung cấp', '/admin/hoa-don-nhap' => '📥 Hóa đơn nhập'];
+// Mục tin nhắn kèm huy hiệu số tin khách chưa được đọc
+$unreadChat = (new Chat())->adminUnreadTotal();
+$nav['/admin/tin-nhan'] ='💬 Tin nhắn' . ($unreadChat ? ' <span class="badge rounded-pill bg-danger">' . $unreadChat . '</span>' : '');
 $path = '/' . trim(preg_replace('#^' . preg_quote(BASE_URL, '#') . '#', '', parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH)), '/');
 ?>
 <nav class="navbar navbar-dark bg-dark">

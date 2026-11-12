@@ -87,5 +87,6 @@ class AuthController extends Controller
     {
         session_regenerate_id(true);
         $_SESSION['user'] = ['id' => (int)$u['id'], 'full_name' => $u['full_name'], 'email' => $u['email'], 'role' => $u['role']];
+        (new Cart())->restoreForUser((int)$u['id']);   // khôi phục giỏ hàng đã lưu + gộp với giỏ vừa thêm khi chưa đăng nhập
     }
 }

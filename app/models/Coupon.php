@@ -9,6 +9,43 @@ class Coupon extends Model
         return $st->fetch() ?: null;
     }
 
+    /**
+     * Danh sách voucher khách có thể xem ở giỏ hàng: chỉ gồm mã đang bật, trong thời hạn, còn lượt dùng.
+     * Mỗi mã kèm: 'discount' (số tiền giảm với giỏ hiện tại, hoặc mức giảm khi đủ điều kiện),
+     * 'usable' (đủ điều kiện đơn tối thiểu?), 'missing' (cần mua thêm bao nhiêu), 'best' (giảm nhiều nhất).
+     * Sắp xếp: mã dùng được lên trước, giảm nhiều nhất trước.
+     */
+    public function available(int $subtotal): array
+    {
+        $rows = $this->db->query(
+            "SELECT * FROM coupons
+             WHERE is_active = 1
+               AND (start_date IS NULL OR start_date <= CURDATE())
+               AND (end_date IS NULL OR end_date >= CURDATE())
+               AND (usage_limit IS NULL OR used_count < usage_limit)")->fetchAll();
+        $list = [];
+        foreach ($rows as $c) {
+            $c['usable']   = $subtotal >= (int)$c['min_order'];
+            // Nếu chưa đủ điều kiện, tính mức giảm tại ngưỡng tối thiểu để khách biết mình sẽ được gì
+            $c['discount'] = self::evaluate($c, max($subtotal, (int)$c['min_order']))[0];
+            $c['missing']  = $c['usable'] ? 0 : (int)$c['min_order'] - $subtotal;
+            $c['best']     = false;
+            $list[] = $c;
+        }
+        usort($list, fn($a, $b) => [$b['usable'], $b['discount']] <=> [$a['usable'], $a['discount']]);
+        if ($list && $list[0]['usable'] && $list[0]['discount'] > 0) $list[0]['best'] = true;
+        return $list;
+    }
+
+    /** Mô tả ngắn ưu đãi, vd "Giảm 10% (tối đa 30.000đ)". */
+    public static function describe(array $c): string
+    {
+        if ($c['discount_type'] === 'percent') {
+            return 'Giảm ' . (int)$c['discount_value'] . '%' . ($c['max_discount'] !== null ? ' (tối đa ' . money($c['max_discount']) . ')' : '');
+        }
+        return 'Giảm ' . money($c['discount_value']);
+    }
+
     /* ===================== DÀNH CHO ADMIN ===================== */
 
     public function all(): array { return $this->db->query("SELECT * FROM coupons ORDER BY id DESC")->fetchAll(); }
