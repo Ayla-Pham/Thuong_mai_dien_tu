@@ -10,3 +10,19 @@ config/config.local.php
 # File hóa đơn nhập hàng do admin upload (dữ liệu riêng tư, không đưa lên git)
 storage/invoices/*
 !storage/invoices/.gitkeep
+
+# Tài liệu hướng dẫn nội bộ và báo cáo (không cần khi triển khai lên server)
+CLAUDE.md
+GUDELINE.md
+INPUT/
+OUTPUT/
+*.docx
+*.doc
+*.pdf
+
+# Công cụ / trình soạn thảo / hệ điều hành
+.claude/
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
